@@ -1,13 +1,13 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QSizePolicy, QLayout
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-from PyQt5.uic import loadUi
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QSizePolicy, QLayout, QLabel
+from PyQt5.QtGui import QPixmap, QPainter, QColor, QPen
+from PyQt5.QtCore import Qt, QPointF
+from PyQt5.uic import loadUi                                                            
 import sys
 import os
 import json
 
-class Main(QMainWindow):
+class Main(QMainWindow, QWidget):
     def __init__(self):
         super(Main, self).__init__()
         loadUi("main.ui", self)
@@ -19,6 +19,10 @@ class Main(QMainWindow):
         self.json_path = []
         self.count = 0
 
+        self.fname = ""
+        self.jfile = ""
+        self.json_loaded = False
+
         # Shapes inside Json data
         self.shapes = []
         self.label = []
@@ -27,6 +31,12 @@ class Main(QMainWindow):
         self.group_id = []
         self.shape_type = []
         self.flags = []
+        # self.x_coordinates = []
+        # self.y_coordinates = []
+        # self.group_label =[]
+        self.group_point = []
+        self.points_with_labels = []
+        self.coordinates = []
 
         self.actionOpen_File.triggered.connect(self.openFile)
         self.actionOpen_Folder.triggered.connect(self.openFolder)
@@ -39,30 +49,62 @@ class Main(QMainWindow):
         self.actionBack_Image.triggered.connect(self.backImage)
         self.actionClose.triggered.connect(self.Close)
 
-    def showPic(self, fname):
-        original_pixmap = QPixmap(fname)
+    def paintEvent(self, event):
+        if not self.fname:
+            return
+
+        painter = QPainter(self.ScreenPic.pixmap())
+        painter.setPen(QPen(Qt.red, 2, Qt.SolidLine))
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+        
+        for group_label in self.coordinates:
+            j = 0
+            while (j < len(group_label) - 1):
+                p1 = QPointF(group_label[j][0], group_label[j][1])
+                p2 = QPointF(group_label[j+1][0], group_label[j+1][1])
+                painter.drawLine(p1, p2)
+                j += 1
+            p1 = QPointF(group_label[0][0], group_label[0][1])
+            p2 = QPointF(group_label[len(group_label) - 1][0], group_label[len(group_label) - 1][1])
+            painter.drawLine(p1, p2)
+
+    def showPic(self):
+        original_pixmap = QPixmap(self.fname)
         self.ScreenPic.setPixmap(original_pixmap.scaled(1591, 904, aspectRatioMode=Qt.KeepAspectRatio))
+        self.ScreenPic.update()
+
+    def loadJsonFile(self):
+        f = open(self.jfile)
+        data = json.load(f)
+
+        self.saveJsonData(data)
+
+        for label, points in self.points_with_labels:
+            group_label = []
+            for point in points:
+                group_point = []
+                group_point.append(point.x())
+                group_point.append(point.y())
+                group_label.append(group_point)
+            self.coordinates.append(group_label)
+
+        f.close()
+
 
     def openFile(self):
         self.fname, _ = QFileDialog.getOpenFileName(self, 'Open File', 'C\\' ,'Image files (*.jpg *.png)')
         self.directory = os.path.dirname(self.fname)
-        self.showPic(self.fname)      
+        self.showPic()      
 
     def openFolder(self):
         self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
         for filename in os.listdir(self.directory):
             if(filename.endswith('.jpg') or filename.endswith('.png')):
                 self.file_path.append(os.path.join(self.directory, filename))
-        self.showPic(self.file_path[0])
-
-    def saveJsonData(self, data):
-        for self.shapes in data['shapes']:
-            self.label.append(self.shapes['label'])
-            self.text.append(self.shapes['text'])
-            self.points.append(self.shapes['points'])
-            self.group_id.append(self.shapes['group_id'])
-            self.shape_type.append(self.shapes['shape_type'])
-            self.flags.append(self.shapes['flags'])
+        self.fname = self.file_path[0]
+        self.showPic()
 
     def openJsonFiles(self):
         self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
@@ -70,14 +112,31 @@ class Main(QMainWindow):
             if(filename.endswith('.json')):
                 self.json_path.append(os.path.join(self.directory, filename))
 
-        f = open(self.json_path[0])
-        data = json.load(f)
+        self.jfile = self.json_path[0]
 
-        self.saveJsonData(data)
+        self.loadJsonFile()
+            
+        # print(self.coordinates)
 
-        # print(self.points[0])
+        # for shape_points in self.points:
+        #     for point in shape_points:
+        #         self.x_coordinates.append(point.x()*2.71)
+        #         self.y_coordinates.append(point.y()*2.71)
 
-        f.close()
+    def saveJsonData(self, data):
+
+        for shape in data['shapes']:
+            label = shape['label']
+            points = [QPointF(point[0], point[1]) for point in shape['points']]
+            self.points_with_labels.append((label, points))
+
+        for self.shapes in data['shapes']:
+            self.label.append(self.shapes['label'])
+            self.text.append(self.shapes['text'])
+            # self.points.append([QPointF(point[0], point[1]) for point in self.shapes['points']])
+            self.group_id.append(self.shapes['group_id'])
+            self.shape_type.append(self.shapes['shape_type'])
+            self.flags.append(self.shapes['flags'])
 
     def openRecent(self):
         print('Open Recent')
@@ -100,7 +159,15 @@ class Main(QMainWindow):
         else:
             self.count = 0
         
-        self.showPic(self.file_path[self.count])
+        self.coordinates.clear()  # Clear previous lines
+        self.ScreenPic.setPixmap(QtGui.QPixmap())
+
+        self.fname = self.file_path[self.count]
+        self.jfile = self.json_path[self.count]
+
+
+        self.showPic()
+        self.loadJsonFile()
         
 
     def backImage(self):
@@ -108,11 +175,22 @@ class Main(QMainWindow):
             self.count -= 1
         else:
             self.count = len(self.file_path) - 1
+
+        self.coordinates.clear()  # Clear previous lines
+        self.ScreenPic.setPixmap(QtGui.QPixmap())
+
+        self.fname = self.file_path[self.count]
+        self.jfile = self.json_path[self.count]
+
+        self.ScreenPic.setPixmap(QtGui.QPixmap())
         
-        self.showPic(self.file_path[self.count])
+        self.showPic()
+        self.loadJsonFile()
     
     def Close(self):
         print('Close')
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
