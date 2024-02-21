@@ -54,6 +54,7 @@ class Main(QMainWindow, QWidget):
             return
 
         painter = QPainter(self.ScreenPic.pixmap())
+
         painter.setPen(QPen(Qt.red, 2, Qt.SolidLine))
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -69,6 +70,9 @@ class Main(QMainWindow, QWidget):
             p1 = QPointF(group_label[0][0], group_label[0][1])
             p2 = QPointF(group_label[len(group_label) - 1][0], group_label[len(group_label) - 1][1])
             painter.drawLine(p1, p2)
+        
+
+        painter.end()
 
     def showPic(self):
         original_pixmap = QPixmap(self.fname)
@@ -80,6 +84,7 @@ class Main(QMainWindow, QWidget):
         data = json.load(f)
 
         self.saveJsonData(data)
+        self.coordinates.clear()
 
         for label, points in self.points_with_labels:
             group_label = []
@@ -125,6 +130,9 @@ class Main(QMainWindow, QWidget):
 
     def saveJsonData(self, data):
 
+        self.points_with_labels.clear()
+        self.points_with_labels = []
+
         for shape in data['shapes']:
             label = shape['label']
             points = [QPointF(point[0], point[1]) for point in shape['points']]
@@ -159,13 +167,12 @@ class Main(QMainWindow, QWidget):
         else:
             self.count = 0
         
-        self.coordinates.clear()  # Clear previous lines
         self.ScreenPic.setPixmap(QtGui.QPixmap())
 
         self.fname = self.file_path[self.count]
         self.jfile = self.json_path[self.count]
 
-
+        
         self.showPic()
         self.loadJsonFile()
         
@@ -176,7 +183,6 @@ class Main(QMainWindow, QWidget):
         else:
             self.count = len(self.file_path) - 1
 
-        self.coordinates.clear()  # Clear previous lines
         self.ScreenPic.setPixmap(QtGui.QPixmap())
 
         self.fname = self.file_path[self.count]
