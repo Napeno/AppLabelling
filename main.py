@@ -76,8 +76,15 @@ class Main(QMainWindow, QWidget):
 
     def showPic(self):
         original_pixmap = QPixmap(self.fname)
+        # print(original_pixmap.width())
+        # print(original_pixmap.height())
         self.ScreenPic.setPixmap(original_pixmap.scaled(1591, 904, aspectRatioMode=Qt.KeepAspectRatio))
         self.ScreenPic.update()
+
+    def getCaculated_coordinates(self):
+        original_pixmap = QPixmap(self.fname)
+        return 904 / original_pixmap.height()
+
 
     def loadJsonFile(self):
         f = open(self.jfile)
@@ -86,12 +93,14 @@ class Main(QMainWindow, QWidget):
         self.saveJsonData(data)
         self.coordinates.clear()
 
+        num = self.getCaculated_coordinates()
+
         for label, points in self.points_with_labels:
             group_label = []
             for point in points:
                 group_point = []
-                group_point.append(point.x())
-                group_point.append(point.y())
+                group_point.append(point.x()*num)
+                group_point.append(point.y()*num)
                 group_label.append(group_point)
             self.coordinates.append(group_label)
 
