@@ -66,6 +66,9 @@
     <addaction name="actionBack_Image"/>
     <addaction name="separator"/>
     <addaction name="actionClose"/>
+    <addaction name="separator"/>
+    <addaction name="actionNext_label"/>
+    <addaction name="actionBack_label"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -153,10 +156,29 @@
   </action>
   <action name="actionBack_Image">
    <property name="text">
-    <string>Back Imgae</string>
+    <string>Back Image</string>
    </property>
    <property name="shortcut">
     <string>Q</string>
+   </property>
+  </action>
+  <action name="actionNext_label">
+   <property name="text">
+    <string>Next Label</string>
+   </property>
+   <property name="shortcut">
+    <string>D</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionBack_label">
+   <property name="text">
+    <string>Back label</string>
+   </property>
+   <property name="shortcut">
+    <string>A</string>
    </property>
   </action>
  </widget>

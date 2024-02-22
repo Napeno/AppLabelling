@@ -1,31 +1,22 @@
+from PyQt5.QtGui import QPainter, QPolygonF, QColor
+from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtCore import Qt, QPointF, QPoint
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QMenuBar, QStatusBar
-from PyQt5.QtCore import QRect, QMetaObject,QRectF
-from PyQt5.QtGui import QPainter, QPen, QColor, QFont
-from PyQt5.Qt import Qt
 
-class Demo(QMainWindow):
-	def __init__(self):
-		super().__init__()
-		self.text = 'Hello World'
-		self.setGeometry(300, 300, 500, 500)
-    
-	def paintEvent(self, event):
-		painter = QPainter()
-		painter.begin(self)
-		print('y')
-		self.drawText(event, painter)
-		painter.end()
+class Example(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(300, 300, 350, 200)
 
-	def drawText(self, event, p):
-		p.setPen(QColor(255, 0, 0))
-		p.setFont(QFont('Open Sans', 12))
-		p.drawText(event.rect(), Qt.AlignCenter, self.text)
+    def paintEvent(self, event):
+        qp = QPainter(self)
+        qp.setPen(QColor(0, 0, 0))
+        qp.setBrush(QColor(255, 0, 0))
+        points = QPolygonF([QPointF(50.11111, 50), QPointF(150, 50), QPointF(100, 150)])
+        qp.drawPolygon(points)
 
-def main():
-	app = QApplication(sys.argv)
-	demo = Demo()
-	demo.show()
-	app.exec_()
-
-main()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = Example()
+    ex.show()
+    sys.exit(app.exec_())
