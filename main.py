@@ -26,6 +26,7 @@ class Main(QMainWindow, QWidget):
         self.fname = ""
         self.jfile = ""
         self.label_selected = ""
+        self.data = ""
         self.label_loaded = False
         self.isFolder = False
         self.isJson = False
@@ -129,9 +130,11 @@ class Main(QMainWindow, QWidget):
 
     def loadJsonFile(self):
         f = open(self.jfile)
-        data = json.load(f)
 
-        self.saveJsonData(data)
+        self.data = json.load(f)
+
+        self.saveJsonData(self.data)
+        print(self.text)
         self.coordinates.clear()
 
         num = self.getCaculated_multiplier()
@@ -298,14 +301,21 @@ class Main(QMainWindow, QWidget):
         left_coordinate = (max_x_value[0]) + 10
         top_coordinate = min_y_value[1]
 
-        pop = Popup(int(left_coordinate), int(top_coordinate), self.count_label + 1, self.jfile, self)
+        self.text = []
+
+        # for shape in self.shapes:
+        for shape in self.data['shapes']:
+            if(int(self.count_label + 1) == int(shape["label"])):
+                self.text = shape["text"]
+
+        pop = Popup(int(left_coordinate), int(top_coordinate), self.count_label + 1, self.text, self.jfile, self)
         pop.show()
 
     def Close(self):
         print('Close')
 
 class Popup(QDialog):
-    def __init__(self, a, b, labelIndex, jfile, parent):
+    def __init__(self, a, b, labelIndex, texts, jfile, parent):
         super().__init__(parent)
         self.exit_edit = False
         self.setWindowTitle("Label " + str(labelIndex))
@@ -359,6 +369,10 @@ class Popup(QDialog):
         self.list_widget.setGeometry(10, 80, 280, 140)
         self.list_widget.clicked.connect(self.itemClicked)
 
+        # Load texts to list view
+        self.loadText(texts)
+
+
     def keyPressEvent(self, e):
         if e.key() == 16777220 and not e.modifiers():
             self.handleAction()
@@ -390,7 +404,8 @@ class Popup(QDialog):
             for shape in file_data["shapes"]:
                 if (int(shape["label"]) == int(self.labelIndex)):
                     for text in texts:
-                        shape["text"].append(text)
+                        if text not in shape['text']:
+                            shape["text"].append(text)
         with open(filename, 'w') as file:
             json.dump(file_data, file, indent=2)
     
@@ -422,6 +437,10 @@ class Popup(QDialog):
         self.list_widget.item(row).setText(item)
         self.list_widget.clearSelection()
         self.checkUpdate = False
+    
+    def loadText(self, texts):
+        for i in range(0, len(texts) - 1):
+            self.list_widget.insertItem(i, texts[i])
 
     def itemClicked(self):
         self.clicked_text = self.list_widget.currentItem()
