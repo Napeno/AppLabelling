@@ -1,22 +1,21 @@
-from PyQt5.QtGui import QPainter, QPolygonF, QColor
-from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtCore import Qt, QPointF, QPoint
-import sys
+import os
+import json
 
-class Example(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setGeometry(300, 300, 350, 200)
+def convert_text_to_array(json_file_path):
+    for filename in os.listdir(json_file_path):
+        if filename.endswith('.json'):  
+            file_path = os.path.join(json_file_path, filename)
+            with open(file_path, 'r') as file:
+                data = json.load(file)
 
-    def paintEvent(self, event):
-        qp = QPainter(self)
-        qp.setPen(QColor(0, 0, 0))
-        qp.setBrush(QColor(255, 0, 0))
-        points = QPolygonF([QPointF(50.11111, 50), QPointF(150, 50), QPointF(100, 150)])
-        qp.drawPolygon(points)
+            for shape in data['shapes']:
+                shape['text'] = []
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = Example()
-    ex.show()
-    sys.exit(app.exec_())
+            with open(file_path, 'w') as file:  # Corrected line
+                json.dump(data, file, indent=2)
+
+if __name__ == "__main__":
+    folder_path = r'C:\AppLabelling\TestFiles'
+    # for i in range(114, 238):
+    # final_path = os.path.join(folder_path, str(i+1))
+    convert_text_to_array(folder_path)

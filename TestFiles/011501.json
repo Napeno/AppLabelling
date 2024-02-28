@@ -4,7 +4,7 @@
   "shapes": [
     {
       "label": "1",
-      "text": "",
+      "text": [],
       "points": [
         [
           188.0,
@@ -373,7 +373,7 @@
     },
     {
       "label": "2",
-      "text": "",
+      "text": [],
       "points": [
         [
           251.0,

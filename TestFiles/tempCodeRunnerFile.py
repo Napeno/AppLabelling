@@ -1,9 +1,1 @@
-    pixmap = QPixmap(self.label_top.size())
-        pixmap.fill(Qt.transparent)
-        qp = QPainter(pixmap)
-        pen = QPen(Qt.red, 3)
-        qp.setPen(pen)
-        qp.drawLine(10, 10, 50, 50)
-        qp.end()
-        self.label_top.setPixmap(pixmap)
-        self.label_bot.setText(textbot)
+False
