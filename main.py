@@ -134,7 +134,7 @@ class Main(QMainWindow, QWidget):
         self.data = json.load(f)
 
         self.saveJsonData(self.data)
-        print(self.text)
+        # print(self.text)
         self.coordinates.clear()
 
         num = self.getCaculated_multiplier()
@@ -303,11 +303,12 @@ class Main(QMainWindow, QWidget):
 
         self.text = []
 
+        f = open(self.jfile)
+        self.data = json.load(f)
         # for shape in self.shapes:
         for shape in self.data['shapes']:
             if(int(self.count_label + 1) == int(shape["label"])):
                 self.text = shape["text"]
-
         pop = Popup(int(left_coordinate), int(top_coordinate), self.count_label + 1, self.text, self.jfile, self)
         pop.show()
 
@@ -385,22 +386,22 @@ class Popup(QDialog):
 
     def doneButtonEvent(self):
         # print('Button Done pushed')
-
         for index in range(self.list_widget.count()):
             item = self.list_widget.item(index)
             self.textStored.append(item.text())
-
         self.write_json(self.textStored, self.jfile)
 
-        Popup.hide(self)
+        Popup.close(self)
 
     def cancleButtonEvent(self):
         # print('Cancle Button pushed')
-        Popup.hide(self)
+        Popup.close(self)
 
     def write_json(self, texts, filename):
         with open(filename, 'r') as file:
             file_data = json.load(file)
+            for shape in file_data['shapes']:
+                shape['text'] = []
             for shape in file_data["shapes"]:
                 if (int(shape["label"]) == int(self.labelIndex)):
                     for text in texts:
@@ -439,7 +440,7 @@ class Popup(QDialog):
         self.checkUpdate = False
     
     def loadText(self, texts):
-        for i in range(0, len(texts) - 1):
+        for i in range(0, len(texts)):
             self.list_widget.insertItem(i, texts[i])
 
     def itemClicked(self):
