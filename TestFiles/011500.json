@@ -5,6 +5,9 @@
     {
       "label": "1",
       "text": [
+        "Boy",
+        "Old guy",
+        ""
       ],
       "points": [
         [
@@ -410,7 +413,10 @@
     },
     {
       "label": "2",
-      "text": [],
+      "text": [
+        "Woman",
+        "Old grandma"
+      ],
       "points": [
         [
           224.1111111111111,

@@ -15,7 +15,14 @@ def convert_text_to_array(json_file_path):
                 json.dump(data, file, indent=2)
 
 if __name__ == "__main__":
-    folder_path = r'C:\AppLabelling\TestFiles'
-    # for i in range(114, 238):
-    # final_path = os.path.join(folder_path, str(i+1))
-    convert_text_to_array(folder_path)
+
+    # Đổi lại tên folder chính giúp tôi
+
+    folder_path = r'C:\AppLabelling\TestFiles' 
+
+    # Xem thư mục của ông nằm trong khoảng bao nhiêu thì thay vô
+
+    for i in range(114, 238):
+
+        final_path = os.path.join(folder_path, str(i+1))
+        convert_text_to_array(folder_path)

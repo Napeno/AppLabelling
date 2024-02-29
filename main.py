@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QLineEdit, QDialog, QPushButton, QListWidget
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QLineEdit, QDialog, QPushButton, QListWidget, QMessageBox
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QPen, QPolygonF, QIcon
-from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtCore import Qt, QPointF, QRect
 from PyQt5.uic import loadUi                                                            
 import sys
 import numpy as np
@@ -13,6 +13,25 @@ class Main(QMainWindow, QWidget):
         super(Main, self).__init__()
         loadUi("main.ui", self)
         
+        self.header_Label.setStyleSheet("QLabel { background-color : black; color : white; }")
+        self.header_Text.setStyleSheet("QLabel { background-color : black; color : white; }")
+        self.header_file.setStyleSheet("QLabel { background-color : black; color : white; }")
+
+        self.listFiles = QListWidget(self.centralwidget)
+        self.listFiles.setObjectName(u"listFiles")
+        self.listFiles.setGeometry(QRect(1655, 725, 258, 206))
+        self.listFiles.setSpacing(3)
+
+        self.listTexts = QListWidget(self.centralwidget)
+        self.listTexts.setObjectName(u"listTexts")
+        self.listTexts.setGeometry(QRect(1655, 345, 258, 333))
+        self.listTexts.setSpacing(3)
+
+        self.listLabel = QListWidget(self.centralwidget)
+        self.listLabel.setObjectName(u"listLabel")
+        self.listLabel.setGeometry(QRect(1655, 49, 258, 252))
+        self.listLabel.setSpacing(3)
+
         # Diretory
         self.fname = ""
         self.directory = ""
@@ -30,6 +49,7 @@ class Main(QMainWindow, QWidget):
         self.label_loaded = False
         self.isFolder = False
         self.isJson = False
+        self.isLabel = False
         self.doneEdit = True
 
         # Shapes inside Json data
@@ -71,6 +91,8 @@ class Main(QMainWindow, QWidget):
         # self.cancleButton = QPushButton('Cancle', self.centralwidget)
         # self.cancleButton.setText('Cancle')
         # self.cancleButton.hide()
+
+    
 
     def paintEvent(self, event):
 
@@ -134,7 +156,7 @@ class Main(QMainWindow, QWidget):
         self.data = json.load(f)
 
         self.saveJsonData(self.data)
-        # print(self.text)
+
         self.coordinates.clear()
 
         num = self.getCaculated_multiplier()
@@ -161,11 +183,20 @@ class Main(QMainWindow, QWidget):
 
     def openFolder(self):
         self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
+
         if self.directory == '':
             return
+
+        count = 0
+
         for filename in os.listdir(self.directory):
             if(filename.endswith('.jpg') or filename.endswith('.png')):
                 self.file_path.append(os.path.join(self.directory, filename))
+                count += 1
+
+        if count == 0:
+            self.errorMsg("No jpg or png files to load")
+            return
 
         self.fname = self.file_path[0]
 
@@ -173,20 +204,43 @@ class Main(QMainWindow, QWidget):
         self.update()
         # self.showPic()
 
+    def errorMsg(self, msg):
+        error = QMessageBox()
+        error.setIcon(QMessageBox.Critical)
+        error.setText(msg)
+        # error.setInformativeText(msg)
+        error.setWindowTitle("Error")
+        error.exec_()
+
     def openJsonFiles(self):
         self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
 
         if self.directory == '':
             return
 
+        if (self.isFolder == False):
+            self.errorMsg("You need to load your folder first")
+            return
+
+        count = 0
+
         for filename in os.listdir(self.directory):
             if(filename.endswith('.json')):
                 self.json_path.append(os.path.join(self.directory, filename))
+                count += 1
+        
+        if (count == 0):
+            self.errorMsg("No Json file to load")
+            return
 
         self.jfile = self.json_path[0]
 
         self.loadJsonFile()
         self.isJson = True
+
+        self.loadFile_View()
+        self.loadLabel_View()
+        # self.loadText_View()
 
         self.update()
 
@@ -194,6 +248,7 @@ class Main(QMainWindow, QWidget):
 
         self.points_with_labels.clear()
         self.points_with_labels = []
+        self.label = []
 
         for shape in data['shapes']:
             label = shape['label']
@@ -218,13 +273,11 @@ class Main(QMainWindow, QWidget):
 
     def saveAuto(self):
         print('Save Auto')
-    
-    def changeOutput(self):
-        print('Change Output')
 
     def nextImage(self):
         if self.isFolder:
             self.label_selected = []
+            self.text.clear()
 
             self.count_label = 0
 
@@ -238,13 +291,19 @@ class Main(QMainWindow, QWidget):
             if self.isJson:
                 self.jfile = self.json_path[self.count]
                 self.loadJsonFile()
+            
+            self.listFiles.setCurrentRow(self.count)
+            self.listTexts.clear()
+            self.loadLabel_View()
+            
+            self.isLabel = False
 
-            self.update()
-        
+            self.update()     
 
     def backImage(self):
         if self.isFolder:
             self.label_selected = []
+            self.text.clear()
 
             self.count_label = 0
 
@@ -261,10 +320,17 @@ class Main(QMainWindow, QWidget):
                 self.jfile = self.json_path[self.count]
                 self.loadJsonFile()
             
+            self.listFiles.setCurrentRow(self.count)
+            self.listTexts.clear()
+            self.loadLabel_View()
+
+            self.isLabel = False
+            
             self.update()
 
     def nextLabel(self):
         if self.isJson:
+            self.isLabel = True
             self.label_selected = []
 
             if (self.count_label < len(self.coordinates) - 1):
@@ -273,13 +339,19 @@ class Main(QMainWindow, QWidget):
                 self.count_label = 0
 
             self.label_selected = self.coordinates[self.count_label]
+            self.listLabel.setCurrentRow(self.count_label)
 
+            self.loadText()
+
+            self.loadText_View()
+            
             self.label_loaded = True
 
             self.update()
     
     def backLabel(self):
         if self.isJson:
+            self.isLabel = True
             self.label_selected = []
 
             if (self.count_label >= 1):
@@ -288,41 +360,73 @@ class Main(QMainWindow, QWidget):
                 self.count_label = len(self.coordinates) - 1
 
             self.label_selected = self.coordinates[self.count_label]
+            self.listLabel.setCurrentRow(self.count_label)
+
+            self.loadText()
+
+            self.loadText_View()
 
             self.label_loaded = True
 
             self.update()
 
     def editLabel(self):
-        max_x_value = max(self.label_selected, key=lambda x: x[0])
-        # min_x_value = min(self.label_selected, key=lambda x: x[0])
-        min_y_value = min(self.label_selected, key=lambda y: y[1])
-        
-        left_coordinate = (max_x_value[0]) + 10
-        top_coordinate = min_y_value[1]
+        if (self.isJson and self.isFolder):
+            if(self.isLabel == False):
+                self.errorMsg("You need to select the label")
+                return
+            max_x_value = max(self.label_selected, key=lambda x: x[0])
+            # min_x_value = min(self.label_selected, key=lambda x: x[0])
+            min_y_value = min(self.label_selected, key=lambda y: y[1])
+            
+            left_coordinate = (max_x_value[0]) + 10
+            top_coordinate = min_y_value[1]
 
-        self.text = []
+            self.text = []
 
+            self.loadText()
+
+            pop = Popup(int(left_coordinate), int(top_coordinate), self.count_label + 1, self.text, self.jfile, self, self)
+            pop.show()
+        else:
+            self.errorMsg("You need to open Json folder first")
+            return
+
+    def loadText(self):
         f = open(self.jfile)
         self.data = json.load(f)
         # for shape in self.shapes:
         for shape in self.data['shapes']:
             if(int(self.count_label + 1) == int(shape["label"])):
                 self.text = shape["text"]
-        pop = Popup(int(left_coordinate), int(top_coordinate), self.count_label + 1, self.text, self.jfile, self)
-        pop.show()
 
+    def loadText_View(self):
+        self.listTexts.clear()
+        self.text
+        for i in range(0, len(self.text)):
+            self.listTexts.insertItem(i, self.text[i])
+
+    def loadLabel_View(self):
+        self.listLabel.clear()
+        for i in range(0, len(self.label)):
+            self.listLabel.insertItem(i, self.label[i])
+
+    def loadFile_View(self):
+        for i in range(0, len(self.json_path)):
+            self.listFiles.insertItem(i, self.json_path[i])
+            
     def Close(self):
         print('Close')
 
 class Popup(QDialog):
-    def __init__(self, a, b, labelIndex, texts, jfile, parent):
+    def __init__(self, a, b, labelIndex, texts, jfile,  main_instance, parent = None,):
         super().__init__(parent)
         self.exit_edit = False
         self.setWindowTitle("Label " + str(labelIndex))
         self.setGeometry(a, b, 300, 240)
 
         self.labelIndex = labelIndex
+        self.main_instance = main_instance
         self.jfile = jfile
         self.countLabel = 0
         self.checkUpdate = False
@@ -391,6 +495,10 @@ class Popup(QDialog):
             self.textStored.append(item.text())
         self.write_json(self.textStored, self.jfile)
 
+        self.main_instance.listTexts.clear()
+        for text in self.textStored:
+            self.main_instance.listTexts.addItem(text)
+
         Popup.close(self)
 
     def cancleButtonEvent(self):
@@ -401,7 +509,8 @@ class Popup(QDialog):
         with open(filename, 'r') as file:
             file_data = json.load(file)
             for shape in file_data['shapes']:
-                shape['text'] = []
+                if (int(shape["label"]) == int(self.labelIndex)):
+                    shape['text'] = []
             for shape in file_data["shapes"]:
                 if (int(shape["label"]) == int(self.labelIndex)):
                     for text in texts:
@@ -450,8 +559,6 @@ class Popup(QDialog):
         self.lineEdit.setText(self.clicked_text.text())
         self.lineEdit.setFocus()
         self.checkUpdate = True
-
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
