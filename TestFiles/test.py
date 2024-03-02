@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # Đổi lại tên folder chính giúp tôi
 
-    folder_path = r'C:\AppLabelling\TestFiles' 
+    folder_path = r'C:\AnyLabelling\Test' 
 
     # Xem thư mục của ông nằm trong khoảng bao nhiêu thì thay vô
 

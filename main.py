@@ -44,8 +44,14 @@ class Main(QMainWindow, QWidget):
 
         self.fname = ""
         self.jfile = ""
-        self.label_selected = ""
+        self.label_selected = []
         self.data = ""
+
+        self.file_clickedText = ""
+        self.file_clickedIndex = ""
+        self.label_clickedText = ""
+        self.label_clickedIndex = ""
+
         self.label_loaded = False
         self.isFolder = False
         self.isJson = False
@@ -79,6 +85,8 @@ class Main(QMainWindow, QWidget):
         self.actionNext_label.triggered.connect(self.nextLabel)
         self.actionBack_label.triggered.connect(self.backLabel)
         self.actionEdit_Label.triggered.connect(self.editLabel)
+        self.listFiles.clicked.connect(self.fileClicked)
+        self.listLabel.clicked.connect(self.labelClicked)
         self.actionClose.triggered.connect(self.Close)
         
         #Widgets
@@ -91,8 +99,6 @@ class Main(QMainWindow, QWidget):
         # self.cancleButton = QPushButton('Cancle', self.centralwidget)
         # self.cancleButton.setText('Cancle')
         # self.cancleButton.hide()
-
-    
 
     def paintEvent(self, event):
 
@@ -138,7 +144,14 @@ class Main(QMainWindow, QWidget):
 
     def getCaculated_multiplier(self):
         original_pixmap = QPixmap(self.fname)
-        return 904 / original_pixmap.height()
+        print(self.fname)
+        print(original_pixmap.width(), original_pixmap.height())
+        ratioFrame = 1591 / 904
+        ratioPic = original_pixmap.width() / original_pixmap.height()
+        if(ratioFrame > ratioPic):
+            return 904 / original_pixmap.height()
+        else:
+            return 1591 / original_pixmap.width()
     
     def getCaculated_coordinates(self):
         original_pixmap = QPixmap(self.fname)
@@ -147,10 +160,89 @@ class Main(QMainWindow, QWidget):
         label_rect = self.ScreenPic.geometry()
         self.x_coordinate = label_rect.x() + (label_rect.width() - pixmap_rect.width()) / 2
         self.y_coordiante = label_rect.y() + (label_rect.height() - pixmap_rect.height()) / 2 + 26
-    
     # def getLineEdit_location(self):
 
-    def loadJsonFile(self):
+    def openFile(self):
+        self.fname, _ = QFileDialog.getOpenFileName(self, 'Open File', 'C\\' ,'Image files (*.jpg *.png)')
+        self.directory = os.path.dirname(self.fname)
+        # self.showPic()      
+
+    def openFolder(self):
+        self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
+
+        print(self.directory)
+        self.json_path = self.directory
+
+        self.file_path = []
+
+        if self.directory == '':
+            return
+
+        count = 0
+
+        for filename in os.listdir(self.directory):
+            if(filename.endswith('.jpg') or filename.endswith('.png')):
+                self.file_path.append(os.path.join(self.directory, filename))
+                count += 1
+
+        if count == 0:
+            self.errorMsg("No jpg or png files to load")
+            return
+
+        self.fname = self.file_path[0]
+
+        self.isFolder = True
+
+        self.loadJsonFiles()
+
+        self.update()
+        # self.showPic()
+
+    def errorMsg(self, msg):
+        error = QMessageBox()
+        error.setIcon(QMessageBox.Critical)
+        error.setText(msg)
+        # error.setInformativeText(msg)
+        error.setWindowTitle("Error")
+        error.exec_()
+
+    def openJsonFiles(self):
+        self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
+        self.loadJsonFiles()
+
+    def loadJsonFiles(self):
+        if self.directory == '':
+            return
+
+        if (self.isFolder == False):
+            self.errorMsg("You need to load your folder first")
+            return
+
+        self.label_selected = []
+        count = 0
+        self.json_path = []
+
+        for filename in os.listdir(self.directory):
+            if(filename.endswith('.json')):
+                self.json_path.append(os.path.join(self.directory, filename))
+                count += 1
+        
+        if (count == 0):
+            self.errorMsg("No Json file to load")
+            return
+
+        self.jfile = self.json_path[0]
+
+        self.loadJsonData()
+        self.isJson = True
+
+        self.loadFile_View()
+        self.loadLabel_View()
+        # self.loadText_View()
+
+        self.update()
+
+    def loadJsonData(self):
         f = open(self.jfile)
 
         self.data = json.load(f)
@@ -175,74 +267,6 @@ class Main(QMainWindow, QWidget):
             self.coordinates.append(group_label)
 
         f.close()
-
-    def openFile(self):
-        self.fname, _ = QFileDialog.getOpenFileName(self, 'Open File', 'C\\' ,'Image files (*.jpg *.png)')
-        self.directory = os.path.dirname(self.fname)
-        # self.showPic()      
-
-    def openFolder(self):
-        self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
-
-        if self.directory == '':
-            return
-
-        count = 0
-
-        for filename in os.listdir(self.directory):
-            if(filename.endswith('.jpg') or filename.endswith('.png')):
-                self.file_path.append(os.path.join(self.directory, filename))
-                count += 1
-
-        if count == 0:
-            self.errorMsg("No jpg or png files to load")
-            return
-
-        self.fname = self.file_path[0]
-
-        self.isFolder = True
-        self.update()
-        # self.showPic()
-
-    def errorMsg(self, msg):
-        error = QMessageBox()
-        error.setIcon(QMessageBox.Critical)
-        error.setText(msg)
-        # error.setInformativeText(msg)
-        error.setWindowTitle("Error")
-        error.exec_()
-
-    def openJsonFiles(self):
-        self.directory = QFileDialog.getExistingDirectory(self, 'Open Folder')
-
-        if self.directory == '':
-            return
-
-        if (self.isFolder == False):
-            self.errorMsg("You need to load your folder first")
-            return
-
-        count = 0
-
-        for filename in os.listdir(self.directory):
-            if(filename.endswith('.json')):
-                self.json_path.append(os.path.join(self.directory, filename))
-                count += 1
-        
-        if (count == 0):
-            self.errorMsg("No Json file to load")
-            return
-
-        self.jfile = self.json_path[0]
-
-        self.loadJsonFile()
-        self.isJson = True
-
-        self.loadFile_View()
-        self.loadLabel_View()
-        # self.loadText_View()
-
-        self.update()
 
     def saveJsonData(self, data):
 
@@ -277,6 +301,7 @@ class Main(QMainWindow, QWidget):
     def nextImage(self):
         if self.isFolder:
             self.label_selected = []
+            
             self.text.clear()
 
             self.count_label = 0
@@ -290,7 +315,7 @@ class Main(QMainWindow, QWidget):
 
             if self.isJson:
                 self.jfile = self.json_path[self.count]
-                self.loadJsonFile()
+                self.loadJsonData()
             
             self.listFiles.setCurrentRow(self.count)
             self.listTexts.clear()
@@ -318,7 +343,7 @@ class Main(QMainWindow, QWidget):
 
             if self.isJson:
                 self.jfile = self.json_path[self.count]
-                self.loadJsonFile()
+                self.loadJsonData()
             
             self.listFiles.setCurrentRow(self.count)
             self.listTexts.clear()
@@ -414,7 +439,48 @@ class Main(QMainWindow, QWidget):
     def loadFile_View(self):
         for i in range(0, len(self.json_path)):
             self.listFiles.insertItem(i, self.json_path[i])
-            
+
+    def fileClicked(self):
+
+        self.label_selected = []
+        self.text.clear()
+        self.count_label = 0
+
+        self.file_clickedText = self.listFiles.currentItem()
+        self.file_clickedIndex = self.listFiles.currentIndex()
+
+        self.count = self.file_clickedIndex.row()
+        self.fname = self.file_path[self.count]
+
+        if self.isJson:
+                self.jfile = self.json_path[self.count]
+                self.loadJsonData()
+
+        self.listTexts.clear()
+        self.loadLabel_View()
+
+        self.update()
+
+    def labelClicked(self):
+        self.isLabel = True
+        self.label_selected = []
+
+        self.label_clickedText = self.listLabel.currentItem()
+        self.label_clickedIndex = self.listLabel.currentIndex()
+
+        self.count_label = self.label_clickedIndex.row()
+
+        self.label_selected = self.coordinates[self.count_label]
+        self.listLabel.setCurrentRow(self.count_label)
+
+        self.loadText()
+
+        self.loadText_View()
+        
+        self.label_loaded = True
+
+        self.update()
+
     def Close(self):
         print('Close')
 
@@ -533,10 +599,15 @@ class Popup(QDialog):
         self.checkUpdate = False
     
     def deleteLabel(self):
+        if (self.checkUpdate == False):
+            self.main_instance.errorMsg("Please choose before deleting")
+            return
         self.lineEdit.clear()
         self.lineEdit.clearFocus()
         row = self.clicked_index.row()
         self.list_widget.model().removeRow(row)
+        self.list_widget.clearSelection()
+        self.checkUpdate = False
 
     def insertLabel(self, item):
         self.list_widget.insertItem(self.countLabel, item)
