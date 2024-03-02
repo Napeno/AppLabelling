@@ -93,6 +93,7 @@ class Main(QMainWindow, QWidget):
         self.lineEdit = QLineEdit(self.centralwidget)
         self.lineEdit.hide()
 
+
         # self.doneButton = QPushButton('Done' ,self.centralwidget)
         # self.doneButton.hide()
 
@@ -144,8 +145,6 @@ class Main(QMainWindow, QWidget):
 
     def getCaculated_multiplier(self):
         original_pixmap = QPixmap(self.fname)
-        print(self.fname)
-        print(original_pixmap.width(), original_pixmap.height())
         ratioFrame = 1591 / 904
         ratioPic = original_pixmap.width() / original_pixmap.height()
         if(ratioFrame > ratioPic):
@@ -400,10 +399,14 @@ class Main(QMainWindow, QWidget):
             if(self.isLabel == False):
                 self.errorMsg("You need to select the label")
                 return
+
+            # print(self.label_selected)
             max_x_value = max(self.label_selected, key=lambda x: x[0])
             # min_x_value = min(self.label_selected, key=lambda x: x[0])
             min_y_value = min(self.label_selected, key=lambda y: y[1])
             
+            # print(max_x_value, min_y_value)
+
             left_coordinate = (max_x_value[0]) + 10
             top_coordinate = min_y_value[1]
 
@@ -480,6 +483,42 @@ class Main(QMainWindow, QWidget):
         self.label_loaded = True
 
         self.update()
+
+    def mousePressEvent(self, event):
+        if self.isFolder and self.isJson:
+            num = self.getCaculated_multiplier()
+            self.getCaculated_coordinates()
+            
+            # print(self.coordinates[1])
+            scaled_x = event.x() 
+            scaled_y = event.y() 
+            # print(scaled_x, scaled_y)
+
+            self.mouseClickLabel(scaled_x, scaled_y)
+
+    def mouseClickLabel(self, x, y):
+        
+        i = 0
+        for group_label in self.coordinates:
+            # print(group_label)
+            max_x_value = max(group_label, key=lambda x: x[0])
+            min_x_value = min(group_label, key=lambda x: x[0])
+            max_y_value = max(group_label, key=lambda y: y[1])
+            min_y_value = min(group_label, key=lambda y: y[1])
+
+            # print(max_x_value[0], min_x_value[0], max_y_value[1], min_y_value[1])
+
+            if((x > int(min_x_value[0]) and x < int(max_x_value[0])) and (y > int(min_y_value[1]) and y < int(max_y_value[1]))):
+                self.count_label = i
+                self.label_selected = self.coordinates[i]
+                self.listLabel.setCurrentRow(i)
+                self.loadText()
+                self.loadText_View()
+                self.label_loaded = True
+                self.isLabel = True
+            i += 1
+
+        self.update()            
 
     def Close(self):
         print('Close')

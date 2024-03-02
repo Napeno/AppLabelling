@@ -1,28 +1,28 @@
-import os
-import json
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel
+from PyQt5.QtCore import Qt
 
-def convert_text_to_array(json_file_path):
-    for filename in os.listdir(json_file_path):
-        if filename.endswith('.json'):  
-            file_path = os.path.join(json_file_path, filename)
-            with open(file_path, 'r') as file:
-                data = json.load(file)
+class TouchApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
 
-            for shape in data['shapes']:
-                shape['text'] = []
+    def initUI(self):
+        self.setFixedSize(400, 400)
+        self.label = QLabel('Touch here to get coordinates.', self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setGeometry(0, 0, 400, 400)
+        self.show()
 
-            with open(file_path, 'w') as file:  # Corrected line
-                json.dump(data, file, indent=2)
+    def mousePressEvent(self, event):
+        self.label.setText(f'X: {event.x()}, Y: {event.y()}')
+        self.forLoop()
 
-if __name__ == "__main__":
+    def forLoop(self):
+        for i in range(0, 10):
+            print(i)
 
-    # Đổi lại tên folder chính giúp tôi
-
-    folder_path = r'C:\AnyLabelling\Test' 
-
-    # Xem thư mục của ông nằm trong khoảng bao nhiêu thì thay vô
-
-    for i in range(114, 238):
-
-        final_path = os.path.join(folder_path, str(i+1))
-        convert_text_to_array(folder_path)
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = TouchApp()
+    sys.exit(app.exec_())
