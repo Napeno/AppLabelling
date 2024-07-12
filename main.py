@@ -590,8 +590,24 @@ class Popup(QDialog):
             self.cancleButtonEvent()
         if e.key() == 16777220 and e.modifiers() & Qt.ControlModifier:
             self.doneButtonEvent()
+        if e.key() == QtCore.Qt.Key.Key_Up:
+            self.moveFocusToUpItem()
+        if e.key() == QtCore.Qt.Key.Key_Down:
+            self.moveFocusToBelowItem()
         else:
             super().keyPressEvent(e)
+
+    def moveFocusToUpItem(self):
+        current_row = self.list_widget.currentRow()
+        up_row = (current_row - 1) % self.list_widget.count()
+        self.list_widget.setCurrentRow(up_row)
+        self.itemClicked()
+
+    def moveFocusToBelowItem(self):
+        current_row = self.list_widget.currentRow()
+        below_row = (current_row + 1) % self.list_widget.count()
+        self.list_widget.setCurrentRow(below_row)
+        self.itemClicked()
 
     def doneButtonEvent(self):
         # print('Button Done pushed')
