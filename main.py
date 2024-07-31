@@ -440,8 +440,10 @@ class Main(QMainWindow, QWidget):
             self.listLabel.insertItem(i, self.label[i])
 
     def loadFile_View(self):
-        for i in range(0, len(self.json_path)):
-            self.listFiles.insertItem(i, self.json_path[i])
+        self.listFiles.clear()  
+        for path in self.file_path:
+            file_name = os.path.basename(path) 
+            self.listFiles.addItem(file_name) 
 
     def fileClicked(self):
 
